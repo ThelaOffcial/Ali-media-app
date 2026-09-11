@@ -1,0 +1,69 @@
+{
+  "rules": {
+    "elephants": {
+      ".read": true,
+      ".write": "auth != null && root.child('admins').child(auth.uid).exists()",
+      ".indexOn": ["name", "type", "location"]
+    },
+    "posts": {
+      ".read": true,
+      ".indexOn": ["createdAt", "elephantId", "authorUid", "isStory"],
+      "$postId": {
+        ".write": "auth != null && (!data.exists() || data.child('authorUid').val() === auth.uid || root.child('admins').child(auth.uid).exists())",
+        ".validate": "newData.hasChildren(['authorUid', 'photoUrl', 'createdAt'])"
+      }
+    },
+    "stories": {
+      ".read": true,
+      ".indexOn": ["createdAt", "elephantId", "authorUid"],
+      "$storyId": {
+        ".write": "auth != null && (!data.exists() || data.child('authorUid').val() === auth.uid || root.child('admins').child(auth.uid).exists())"
+      }
+    },
+    "post_likes": {
+      ".read": true,
+      "$postId": {
+        "$uid": {
+          ".write": "auth != null && auth.uid === $uid"
+        }
+      }
+    },
+    "comments": {
+      ".read": true,
+      "$postId": {
+        ".indexOn": ["createdAt"],
+        "$commentId": {
+          ".write": "auth != null && (!data.exists() || data.child('authorUid').val() === auth.uid || root.child('admins').child(auth.uid).exists())"
+        }
+      }
+    },
+    "notices": {
+      ".read": true,
+      ".write": "auth != null && root.child('admins').child(auth.uid).exists()",
+      ".indexOn": ["createdAt", "priority"]
+    },
+    "feedback": {
+      ".read": true,
+      ".indexOn": ["createdAt", "type", "status"],
+      "$feedbackId": {
+        ".write": "auth != null && (!data.exists() || data.child('authorUid').val() === auth.uid || root.child('admins').child(auth.uid).exists())"
+      }
+    },
+    "users": {
+      ".read": true,
+      "$uid": {
+        ".write": "auth != null && (auth.uid === $uid || root.child('admins').child(auth.uid).exists())"
+      }
+    },
+    "follows": {
+      ".read": true,
+      "$uid": {
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+    "admins": {
+      ".read": "auth != null",
+      ".write": false
+    }
+  }
+}
