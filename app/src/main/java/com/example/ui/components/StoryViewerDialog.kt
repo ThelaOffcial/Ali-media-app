@@ -86,15 +86,8 @@ fun StoryViewerDialog(
                 .background(Color.Black)
                 .testTag("story_viewer_modal")
         ) {
-            // Main Media Image
-            if (story.drawableResId != null) {
-                Image(
-                    painter = painterResource(id = story.drawableResId),
-                    contentDescription = story.caption,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-            } else if (story.mediaUrl.isNotBlank()) {
+            // Main Media Image — Cloudinary / RTDB URL only
+            if (story.mediaUrl.startsWith("http")) {
                 AsyncImage(
                     model = story.mediaUrl,
                     contentDescription = story.caption,

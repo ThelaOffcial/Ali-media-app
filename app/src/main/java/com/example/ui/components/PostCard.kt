@@ -236,14 +236,7 @@ fun PostCard(
                         )
                     }
             ) {
-                if (post.drawableResId != null) {
-                    Image(
-                        painter = painterResource(id = post.drawableResId),
-                        contentDescription = post.caption,
-                        modifier = Modifier.fillMaxWidth(),
-                        contentScale = ContentScale.Crop
-                    )
-                } else if (post.photoUrl.isNotBlank()) {
+                if (post.photoUrl.startsWith("http")) {
                     AsyncImage(
                         model = ImageRequest.Builder(context)
                             .data(post.photoUrl)

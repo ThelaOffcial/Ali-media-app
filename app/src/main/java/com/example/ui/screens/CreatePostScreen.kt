@@ -79,28 +79,20 @@ import com.example.ui.theme.ForestGreenPrimary
 @Composable
 fun CreatePostScreen(
     elephants: List<Elephant>,
-    onPublish: (photoUrl: String, drawableRes: Int?, caption: String, elephantId: String?, isStoryOnly: Boolean, aspectRatio: String) -> Unit,
+    onPublish: (photoUrl: String, caption: String, elephantId: String?, isStoryOnly: Boolean, aspectRatio: String) -> Unit,
     onCancel: () -> Unit,
     language: AppLanguage,
     modifier: Modifier = Modifier
 ) {
     var step by remember { mutableIntStateOf(1) }
 
-    // Form State
-    var selectedDrawableRes by remember { mutableStateOf<Int?>(R.drawable.img_hero_tuskers) }
+    // Form State — images only from Cloudinary / RTDB URLs (no local drawables)
     var photoUrl by remember { mutableStateOf("") }
-    var isPastingUrl by remember { mutableStateOf(false) }
+    var isPastingUrl by remember { mutableStateOf(true) }
     var selectedElephantId by remember { mutableStateOf<String?>(null) }
     var caption by remember { mutableStateOf("") }
     var aspectRatio by remember { mutableStateOf("4:3") }
     var isStoryOnly by remember { mutableStateOf(false) }
-
-    // Quick elephant presets for local images
-    val presetDrawables = listOf(
-        R.drawable.img_hero_tuskers,
-        R.drawable.img_nadungamuwa_raja,
-        R.drawable.img_kandula_bath
-    )
 
     Column(
         modifier = modifier
@@ -185,20 +177,11 @@ fun CreatePostScreen(
         ) { currentStep ->
             when (currentStep) {
                 1 -> Step1ChoosePhoto(
-                    selectedDrawableRes = selectedDrawableRes,
-                    onSelectDrawable = {
-                        selectedDrawableRes = it
-                        photoUrl = ""
-                    },
                     photoUrl = photoUrl,
-                    onPhotoUrlChange = {
-                        photoUrl = it
-                        selectedDrawableRes = null
-                    },
+                    onPhotoUrlChange = { photoUrl = it },
                     isPastingUrl = isPastingUrl,
                     onTogglePasteUrl = { isPastingUrl = !isPastingUrl },
-                    presetDrawables = presetDrawables,
-                    onContinue = { step = 2 },
+                    onContinue = { if (photoUrl.startsWith("http")) step = 2 },
                     language = language
                 )
                 2 -> Step2TagElephant(
@@ -213,7 +196,6 @@ fun CreatePostScreen(
                     language = language
                 )
                 3 -> Step3Details(
-                    selectedDrawableRes = selectedDrawableRes,
                     photoUrl = photoUrl,
                     aspectRatio = aspectRatio,
                     onAspectRatioChange = { aspectRatio = it },
@@ -225,7 +207,6 @@ fun CreatePostScreen(
                     onPublish = {
                         onPublish(
                             photoUrl,
-                            selectedDrawableRes,
                             caption,
                             selectedElephantId,
                             isStoryOnly,
@@ -239,16 +220,13 @@ fun CreatePostScreen(
     }
 }
 
-// STEP 1: CHOOSE PHOTO
+// STEP 1: CHOOSE PHOTO — Cloudinary / RTDB URL only (no bundled images)
 @Composable
 private fun Step1ChoosePhoto(
-    selectedDrawableRes: Int?,
-    onSelectDrawable: (Int) -> Unit,
     photoUrl: String,
     onPhotoUrlChange: (String) -> Unit,
     isPastingUrl: Boolean,
     onTogglePasteUrl: () -> Unit,
-    presetDrawables: List<Int>,
     onContinue: () -> Unit,
     language: AppLanguage
 ) {
@@ -266,7 +244,10 @@ private fun Step1ChoosePhoto(
             )
         )
         Text(
-            text = AppStrings.tapToChoosePhoto(language),
+            text = if (language == AppLanguage.SINHALA)
+                "Cloudinary URL එකක් ඇතුළත් කරන්න (drmmn0xp3 / alimanagement)"
+            else
+                "Paste a Cloudinary image URL (cloud: drmmn0xp3, preset: alimanagement)",
             style = MaterialTheme.typography.bodyMedium.copy(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -274,7 +255,6 @@ private fun Step1ChoosePhoto(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // Big Main Photo Preview / Drag & Drop Target
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -286,35 +266,30 @@ private fun Step1ChoosePhoto(
                     Brush.linearGradient(listOf(EmeraldAccent, ForestGreenPrimary)),
                     RoundedCornerShape(24.dp)
                 )
-                .clickable { /* Tap to choose image */ }
                 .testTag("photo_picker_box"),
             contentAlignment = Alignment.Center
         ) {
-            if (selectedDrawableRes != null) {
-                Image(
-                    painter = painterResource(id = selectedDrawableRes),
-                    contentDescription = "Selected Photo",
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop
-                )
-            } else if (photoUrl.isNotBlank()) {
+            if (photoUrl.startsWith("http")) {
                 AsyncImage(
                     model = photoUrl,
-                    contentDescription = "Selected URL Image",
+                    contentDescription = "Cloudinary image",
                     modifier = Modifier.fillMaxSize(),
                     contentScale = ContentScale.Crop
                 )
             } else {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Icon(
-                        imageVector = Icons.Default.AddPhotoAlternate,
-                        contentDescription = "Choose Photo",
+                        imageVector = Icons.Default.Link,
+                        contentDescription = null,
                         tint = EmeraldAccent,
                         modifier = Modifier.size(54.dp)
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
-                        text = "Tap to pick an elephant photo",
+                        text = if (language == AppLanguage.SINHALA)
+                            "Cloudinary URL එකක් paste කරන්න"
+                        else
+                            "Paste Cloudinary image URL below",
                         fontWeight = FontWeight.SemiBold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
@@ -322,98 +297,38 @@ private fun Step1ChoosePhoto(
             }
         }
 
-        Spacer(modifier = Modifier.height(14.dp))
-
-        // Preset Elephants Selection Row
-        Text(
-            text = if (language == AppLanguage.SINHALA) "හෝ අපගේ ඡායාරූප එකතුවෙන් තෝරන්න:" else "Or choose from featured elephant photos:",
-            fontSize = 12.sp,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.align(Alignment.Start)
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
-        ) {
-            presetDrawables.forEach { resId ->
-                val isSelected = selectedDrawableRes == resId
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(70.dp)
-                        .clip(RoundedCornerShape(12.dp))
-                        .border(
-                            width = if (isSelected) 3.dp else 1.dp,
-                            color = if (isSelected) EmeraldAccent else Color.Transparent,
-                            shape = RoundedCornerShape(12.dp)
-                        )
-                        .clickable { onSelectDrawable(resId) }
-                ) {
-                    Image(
-                        painter = painterResource(id = resId),
-                        contentDescription = null,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
-                }
-            }
-        }
-
         Spacer(modifier = Modifier.height(16.dp))
 
-        // URL Input Toggle
-        Row(
+        OutlinedTextField(
+            value = photoUrl,
+            onValueChange = onPhotoUrlChange,
+            placeholder = {
+                Text(
+                    "https://res.cloudinary.com/drmmn0xp3/image/upload/...",
+                    fontSize = 12.sp
+                )
+            },
             modifier = Modifier
-                .clip(RoundedCornerShape(20.dp))
-                .clickable { onTogglePasteUrl() }
-                .padding(8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Default.Link,
-                contentDescription = null,
-                tint = EmeraldAccent,
-                modifier = Modifier.size(18.dp)
-            )
-            Spacer(modifier = Modifier.width(6.dp))
-            Text(
-                text = AppStrings.orPasteUrl(language),
-                fontSize = 12.sp,
-                fontWeight = FontWeight.SemiBold,
-                color = EmeraldAccent
-            )
-        }
-
-        if (isPastingUrl) {
-            OutlinedTextField(
-                value = photoUrl,
-                onValueChange = onPhotoUrlChange,
-                placeholder = { Text(AppStrings.imageUrlPlaceholder(language), fontSize = 12.sp) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp)
-                    .testTag("image_url_input"),
-                shape = RoundedCornerShape(16.dp),
-                singleLine = true
-            )
-        }
+                .fillMaxWidth()
+                .testTag("image_url_input"),
+            shape = RoundedCornerShape(16.dp),
+            singleLine = true,
+            leadingIcon = {
+                Icon(Icons.Default.Link, contentDescription = null, tint = EmeraldAccent)
+            }
+        )
 
         Spacer(modifier = Modifier.weight(1f))
 
-        // Continue Button
         Button(
             onClick = onContinue,
+            enabled = photoUrl.startsWith("http"),
             modifier = Modifier
                 .fillMaxWidth()
                 .height(52.dp)
                 .testTag("step1_continue_button"),
             shape = RoundedCornerShape(26.dp),
-            colors = ButtonDefaults.buttonColors(
-                containerColor = ForestGreenPrimary
-            )
+            colors = ButtonDefaults.buttonColors(containerColor = ForestGreenPrimary)
         ) {
             Text(
                 text = AppStrings.continueBtn(language),
@@ -516,10 +431,12 @@ private fun Step2TagElephant(
                             modifier = Modifier
                                 .size(44.dp)
                                 .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
                         ) {
-                            if (elephant.drawableResId != null) {
-                                Image(
-                                    painter = painterResource(id = elephant.drawableResId),
+                            val thumb = elephant.photos.firstOrNull()
+                            if (!thumb.isNullOrBlank()) {
+                                AsyncImage(
+                                    model = thumb,
                                     contentDescription = null,
                                     modifier = Modifier.fillMaxSize(),
                                     contentScale = ContentScale.Crop
@@ -599,7 +516,6 @@ private fun Step2TagElephant(
 // STEP 3: DETAILS & PUBLISH
 @Composable
 private fun Step3Details(
-    selectedDrawableRes: Int?,
     photoUrl: String,
     aspectRatio: String,
     onAspectRatioChange: (String) -> Unit,
@@ -640,14 +556,7 @@ private fun Step3Details(
                     .clip(RoundedCornerShape(20.dp))
                     .background(Color.Black.copy(alpha = 0.1f))
             ) {
-                if (selectedDrawableRes != null) {
-                    Image(
-                        painter = painterResource(id = selectedDrawableRes),
-                        contentDescription = "Post Preview",
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Crop
-                    )
-                } else if (photoUrl.isNotBlank()) {
+                if (photoUrl.startsWith("http")) {
                     AsyncImage(
                         model = photoUrl,
                         contentDescription = "Post Preview",

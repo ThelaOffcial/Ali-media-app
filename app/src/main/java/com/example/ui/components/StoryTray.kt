@@ -146,16 +146,7 @@ fun StoryTray(
                         .padding(2.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    if (story.drawableResId != null) {
-                        Image(
-                            painter = painterResource(id = story.drawableResId),
-                            contentDescription = displayName,
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .clip(CircleShape),
-                            contentScale = ContentScale.Crop
-                        )
-                    } else if (story.mediaUrl.isNotBlank()) {
+                    if (story.mediaUrl.startsWith("http")) {
                         AsyncImage(
                             model = story.mediaUrl,
                             contentDescription = displayName,

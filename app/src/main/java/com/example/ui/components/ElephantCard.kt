@@ -88,14 +88,7 @@ fun ElephantCard(
                     .fillMaxWidth()
                     .aspectRatio(16f / 9f)
             ) {
-                if (elephant.drawableResId != null) {
-                    Image(
-                        painter = painterResource(id = elephant.drawableResId),
-                        contentDescription = elephant.name,
-                        modifier = Modifier.fillMaxWidth(),
-                        contentScale = ContentScale.Crop
-                    )
-                } else if (elephant.photos.isNotEmpty()) {
+                if (elephant.photos.isNotEmpty() && elephant.photos.first().startsWith("http")) {
                     val context = LocalContext.current
                     AsyncImage(
                         model = ImageRequest.Builder(context)

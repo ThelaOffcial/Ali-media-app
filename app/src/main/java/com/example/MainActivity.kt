@@ -282,10 +282,9 @@ fun AliMediaApp() {
                                 AppTab.CREATE -> {
                                     CreatePostScreen(
                                         elephants = elephants,
-                                        onPublish = { photoUrl, drawableRes, caption, elephantId, isStoryOnly, aspect ->
+                                        onPublish = { photoUrl, caption, elephantId, isStoryOnly, aspect ->
                                             repository.createPost(
                                                 photoUrl = photoUrl,
-                                                drawableRes = drawableRes,
                                                 caption = caption,
                                                 elephantId = elephantId,
                                                 isStoryOnly = isStoryOnly,

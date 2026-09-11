@@ -1,7 +1,6 @@
 package com.example.data.remote
 
 import android.util.Log
-import com.example.R
 import com.example.data.model.Elephant
 import com.example.data.model.ElephantPost
 import com.example.data.model.ElephantType
@@ -89,13 +88,7 @@ class FirebaseRtdbService(
                         }
                     }
 
-                    // Fallback drawable if photo is empty
-                    val drawableRes = if (photos.isEmpty()) {
-                        if (name.contains("Nadungamuwa", ignoreCase = true)) R.drawable.img_nadungamuwa_raja
-                        else if (name.contains("Kandula", ignoreCase = true)) R.drawable.img_kandula_bath
-                        else R.drawable.img_hero_tuskers
-                    } else null
-
+                    // Photos come only from RTDB / Cloudinary — no local image fallbacks
                     result.add(
                         Elephant(
                             id = key,
@@ -106,7 +99,7 @@ class FirebaseRtdbService(
                             type = type,
                             isLive = isLive,
                             photos = photos,
-                            drawableResId = drawableRes,
+                            drawableResId = null,
                             description = desc,
                             descriptionSinhala = desc,
                             age = age,

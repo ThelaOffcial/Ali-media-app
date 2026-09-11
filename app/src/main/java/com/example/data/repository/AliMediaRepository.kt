@@ -1,6 +1,5 @@
 package com.example.data.repository
 
-import com.example.R
 import com.example.data.model.Elephant
 import com.example.data.model.ElephantPost
 import com.example.data.model.ElephantType
@@ -241,14 +240,21 @@ class AliMediaRepository {
         }
     }
 
+    /**
+     * Create post/story. [photoUrl] must be a Cloudinary (or other http) URL.
+     * No local drawable images — content images come only from RTDB + Cloudinary
+     * (cloud name: drmmn0xp3, preset: alimanagement).
+     */
     fun createPost(
         photoUrl: String,
-        drawableRes: Int?,
         caption: String,
         elephantId: String?,
         isStoryOnly: Boolean,
         aspectRatio: String
     ) {
+        require(photoUrl.startsWith("http")) {
+            "photoUrl must be a Cloudinary/hosted URL (cloud: drmmn0xp3)"
+        }
         val user = _currentUser.value
         val targetElephant = _elephants.value.find { it.id == elephantId }
         val tempId = "temp_${UUID.randomUUID()}"
@@ -259,7 +265,7 @@ class AliMediaRepository {
             elephantName = targetElephant?.name,
             elephantSinhalaName = targetElephant?.sinhalaName,
             photoUrl = photoUrl,
-            drawableResId = drawableRes ?: R.drawable.img_hero_tuskers,
+            drawableResId = null,
             caption = caption,
             authorUid = user.uid,
             authorName = user.displayName,
@@ -280,7 +286,6 @@ class AliMediaRepository {
             _currentUser.value = user.copy(postsCount = user.postsCount + 1)
         }
 
-        // Add to stories tray
         val newStory = Story(
             id = "story_$tempId",
             authorUid = user.uid,
@@ -291,13 +296,12 @@ class AliMediaRepository {
             elephantName = targetElephant?.name,
             elephantSinhalaName = targetElephant?.sinhalaName,
             mediaUrl = photoUrl,
-            drawableResId = drawableRes ?: R.drawable.img_hero_tuskers,
+            drawableResId = null,
             caption = caption,
             createdAt = System.currentTimeMillis()
         )
         _stories.value = listOf(newStory) + _stories.value
 
-        // Persist to elephant_posts/{id} – exact same path as website
         CoroutineScope(Dispatchers.IO).launch {
             val remoteId = rtdbService.createPost(
                 authorUid = user.uid,
@@ -358,7 +362,7 @@ class AliMediaRepository {
             locationSinhala = "ගම්පහ, බස්නාහිර පළාත",
             type = ElephantType.TUSKER,
             isLive = false,
-            drawableResId = R.drawable.img_nadungamuwa_raja,
+            drawableResId = null,
             description = "The most revered tusker of contemporary Sri Lanka. For nearly two decades, Nadungamuwa Raja carried the Sacred Tooth Relic casket (Dalada Karanduwa) in the historic Esala Perahera in Kandy.",
             descriptionSinhala = "ශ්‍රී ලංකාවේ වර්තමාන ඉතිහාසයේ විසූ උත්තම ගණයේ හස්තිරාජයෙකි. දශක දෙකකට ආසන්න කාලයක් මහනුවර ඓතිහාසික ඇසළ පෙරහැරේ ශ්‍රී දන්ත ධාතු කරඬුව වැඩමවීමේ පූජනීය භාග්‍යය ලැබුවේය.",
             age = 68,
@@ -375,7 +379,7 @@ class AliMediaRepository {
             locationSinhala = "කතරගම, දකුණු පළාත",
             type = ElephantType.TUSKER,
             isLive = true,
-            drawableResId = R.drawable.img_hero_tuskers,
+            drawableResId = null,
             description = "Chief casket bearer tusker of the Ruhunu Maha Kataragama Devalaya. Known for calm demeanor and grand arched tusks.",
             descriptionSinhala = "රුහුණු මහා කතරගම දේවාලයේ පෙරහැර කරඬුව වැඩමවන ප්‍රධාන හස්තියා. ඉතා ශාන්ත ගතිපැවතුම් සහ දිගු දළ යුගලක් හිමි ගෞරවනීය ඇතෙකි.",
             age = 52,
@@ -392,7 +396,7 @@ class AliMediaRepository {
             locationSinhala = "මහනුවර, මධ්‍යම පළාත",
             type = ElephantType.TUSKER,
             isLive = true,
-            drawableResId = R.drawable.img_hero_tuskers,
+            drawableResId = null,
             description = "Majestic royal tusker of Sri Dalada Maligawa. Gifted by the Government of India in 1987, now one of the senior relic-bearing tuskers in Kandy.",
             descriptionSinhala = "ශ්‍රී දළදා මාලිගාවේ ප්‍රධාන හස්තිරාජයෙකි. 1987 වසරේදී ඉන්දීය රජය විසින් පූජා කරන ලද අතර දළදා පෙරහැරේ ප්‍රධාන කාර්යභාරයක් ඉටු කරයි.",
             age = 45,
@@ -409,7 +413,7 @@ class AliMediaRepository {
             locationSinhala = "කෑගල්ල, සබරගමුව",
             type = ElephantType.TUSKER,
             isLive = false,
-            drawableResId = R.drawable.img_nadungamuwa_raja,
+            drawableResId = null,
             description = "Celebrated as having had the longest tusks in Asia during his lifetime (over 7.5 feet). Carried the Sacred Tooth Relic with supreme dignity.",
             descriptionSinhala = "ආසියාවේ විසූ දිගම දළ යුගලක් හිමිවූ හස්තියා ලෙස ඉතිහාසයට එක්වූ මිල්ලන්ගොඩ රාජා. දළදා කරඬුව ගෞරවාන්විතව වැඩමවීය.",
             age = 73,
@@ -426,7 +430,7 @@ class AliMediaRepository {
             locationSinhala = "පින්නවල, රඹුක්කන",
             type = ElephantType.ELEPHANT,
             isLive = true,
-            drawableResId = R.drawable.img_kandula_bath,
+            drawableResId = null,
             description = "Gentle giant resident at the famous Pinnawala river sanctuary. Beloved by visitors from around the globe for playful river baths.",
             descriptionSinhala = "පින්නවල අලි අනාථාගාරයේ සිටින ජනප්‍රිය හීලෑ අලියා. මා ඔයේ දිය කෙළින ආකාරය දෙස් විදෙස් සංචාරකයන්ගේ නෙත් සිත් ඇදගනී.",
             age = 31,
@@ -443,7 +447,7 @@ class AliMediaRepository {
             elephantId = "wasana_tusker",
             elephantName = "Kataragama Wasana",
             elephantSinhalaName = "රුහුණු කතරගම වාසනා ඇතා",
-            drawableResId = R.drawable.img_hero_tuskers,
+            drawableResId = null,
             caption = "රුහුණු මහා කතරගම ඓතිහාසික පෙරහැර මංගල්‍යයේදී වාසනා ඇතා දේවාභරණ කරඬුව වැඩමවූ අසිරිමත් මොහොත. සැබැවින්ම දර්ශනීය ගාම්භීර දසුනක්! 🐘✨🙏 #AliMedia #Tusker #Kataragama #SriLanka",
             authorUid = "user_kataragama_fan",
             authorName = "Sudath Wickramasinghe",
@@ -471,7 +475,7 @@ class AliMediaRepository {
             elephantId = "nadungamuwa_raja",
             elephantName = "Nadungamuwa Raja",
             elephantSinhalaName = "නැදුන්ගමුවේ රාජා",
-            drawableResId = R.drawable.img_nadungamuwa_raja,
+            drawableResId = null,
             caption = "Remembering the pride of the nation: Nadungamuwa Raja on his peaceful morning walk. The unmatched grace and gentleness of this royal tusker will live forever in our hearts. 👑🐘 #NadungamuwaRaja #Legend #SriLankaElephants",
             authorUid = "user_gemini_sl",
             authorName = "Kavindu Perera",
@@ -494,7 +498,7 @@ class AliMediaRepository {
             elephantId = "kandula_bath",
             elephantName = "Pinnawala Kandula",
             elephantSinhalaName = "පින්නවල කණ්ඩුල",
-            drawableResId = R.drawable.img_kandula_bath,
+            drawableResId = null,
             caption = "Cooling down in the waters of Maha Oya river this afternoon! Water bathing is an essential daily ritual for their skin health and happiness. 🌊☀️🌿 #Pinnawala #ElephantCare #SriLanka #Conservation",
             authorUid = "user_pinnawala_guide",
             authorName = "Dinesh Bandara",
@@ -517,7 +521,7 @@ class AliMediaRepository {
             elephantId = "wasana_tusker",
             elephantName = "Kataragama Wasana",
             elephantSinhalaName = "වාසනා ඇතා",
-            drawableResId = R.drawable.img_hero_tuskers,
+            drawableResId = null,
             caption = "Live from Kandy Dalada Perahera rehearsals! 🛕",
             createdAt = System.currentTimeMillis() - (1 * 60 * 60 * 1000)
         ),
@@ -529,7 +533,7 @@ class AliMediaRepository {
             elephantId = "nadungamuwa_raja",
             elephantName = "Nadungamuwa Raja",
             elephantSinhalaName = "නැදුන්ගමුවේ රාජා",
-            drawableResId = R.drawable.img_nadungamuwa_raja,
+            drawableResId = null,
             caption = "Honoring our timeless legends today 🐘🌿",
             createdAt = System.currentTimeMillis() - (3 * 60 * 60 * 1000)
         ),
@@ -541,7 +545,7 @@ class AliMediaRepository {
             elephantId = "kandula_bath",
             elephantName = "Pinnawala Kandula",
             elephantSinhalaName = "පින්නවල කණ්ඩුල",
-            drawableResId = R.drawable.img_kandula_bath,
+            drawableResId = null,
             caption = "Afternoon river bath time! 💦",
             createdAt = System.currentTimeMillis() - (5 * 60 * 60 * 1000)
         )
