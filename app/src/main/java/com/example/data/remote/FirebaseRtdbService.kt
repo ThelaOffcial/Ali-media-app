@@ -650,4 +650,3 @@ class FirebaseRtdbService(
         private const val TAG = "FirebaseRtdbService"
     }
 }
-
