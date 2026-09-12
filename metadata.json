@@ -1,0 +1,6 @@
+{
+  "name": "AliMedia",
+  "description": "Social community platform for Sri Lankan domesticated elephants and tuskers",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
