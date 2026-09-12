@@ -79,11 +79,12 @@ android {
   }
 }
 
-// Configure the Secrets Gradle Plugin to use .env and .env.example files
-// to match the convention used in Web projects.
+// Secrets Gradle Plugin – look for .env in the project root.
+// We deliberately avoid requiring a defaultPropertiesFileName so the
+// build does not fail when .env.example is missing (e.g. on CI).
 secrets {
   propertiesFileName = ".env"
-  defaultPropertiesFileName = ".env.example"
+  // Do NOT set defaultPropertiesFileName – the plugin throws if the file is absent.
   ignoreList.add("FIREBASE_APPCHECK_DEBUG_TOKEN")
 }
 
